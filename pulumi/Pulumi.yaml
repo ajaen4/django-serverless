@@ -1,0 +1,6 @@
+name: django-learning-infra
+runtime:
+  name: python
+description: Infra for deploying a Django app on an ECS service
+globalTags:
+  project_name: "django-learning"
