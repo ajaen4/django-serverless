@@ -9,7 +9,7 @@ class Repository:
             image_scanning_configuration=ecr.RepositoryImageScanningConfigurationArgs(
                 scan_on_push=True,
             ),
-            image_tag_mutability="IMMUTABLE",
+            image_tag_mutability="MUTABLE",
         )
 
     def get_repository(self):

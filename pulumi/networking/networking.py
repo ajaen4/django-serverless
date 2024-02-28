@@ -1,6 +1,10 @@
+from typing import List
+
 import pulumi
 from pulumi import ResourceOptions
 from pulumi_aws import ec2
+
+from networking.subnet_type import SubnetType
 
 
 class Networking:
@@ -14,20 +18,32 @@ class Networking:
             self.vpc_name, cidr_block="10.0.0.0/16", tags={"Name": self.vpc_name}
         )
 
-        self.public_subnet = ec2.Subnet(
-            "public-subnet",
+        self.public_subnet_a = ec2.Subnet(
+            "public-subnet-a",
             vpc_id=self.vpc.id,
             cidr_block="10.0.1.0/24",
             map_public_ip_on_launch=True,
+            availability_zone="eu-west-1a",
             tags={
-                "Name": "public-subnet",
+                "Name": "public-subnet-a",
+            },
+        )
+
+        self.public_subnet_b = ec2.Subnet(
+            "public-subnet-b",
+            vpc_id=self.vpc.id,
+            cidr_block="10.0.2.0/24",
+            map_public_ip_on_launch=True,
+            availability_zone="eu-west-1b",
+            tags={
+                "Name": "public-subnet-b",
             },
         )
 
         self.private_subnet = ec2.Subnet(
             "private-subnet",
             vpc_id=self.vpc.id,
-            cidr_block="10.0.2.0/24",
+            cidr_block="10.0.3.0/24",
             tags={
                 "Name": "private-subnet",
             },
@@ -92,8 +108,14 @@ class Networking:
         )
 
         ec2.RouteTableAssociation(
-            "public-igw-association",
-            subnet_id=self.public_subnet.id,
+            "public-igw-association_a",
+            subnet_id=self.public_subnet_a.id,
+            route_table_id=public_route_table.id,
+        )
+
+        ec2.RouteTableAssociation(
+            "public-igw-association_b",
+            subnet_id=self.public_subnet_b.id,
             route_table_id=public_route_table.id,
         )
 
@@ -115,5 +137,13 @@ class Networking:
             },
         )
 
-    def get_vpc_id(self):
+    def get_vpc_id(self) -> ec2.Vpc.id:
         return self.vpc.id
+
+    def get_subnet_ids(self, subnet_type: SubnetType) -> List[ec2.Subnet.id]:
+        if subnet_type == SubnetType.PUBLIC:
+            return [self.public_subnet_a.id, self.public_subnet_b.id]
+        elif subnet_type == SubnetType.PRIVATE:
+            return [self.private_subnet.id]
+        else:
+            raise ValueError(f"Invalid subnet type: {subnet_type}")
