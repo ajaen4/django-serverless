@@ -4,8 +4,9 @@ import pulumi_docker as docker
 
 
 class Image:
-    def __init__(self, name: str, ecr_repository: ecr.Repository):
+    def __init__(self, name: str, django_project: str, ecr_repository: ecr.Repository):
         self.name = name
+        self.django_project = django_project
         self.ecr_repository = ecr_repository
 
     def push_image(self, version: str):
@@ -17,8 +18,8 @@ class Image:
                 args={
                     "BUILDKIT_INLINE_CACHE": "1",
                 },
-                context="../django_app/",
-                dockerfile="../django_app/Dockerfile",
+                context=f"../django_services/{self.django_project}/",
+                dockerfile=f"../django_services/{self.django_project}/Dockerfile",
                 platform="linux/amd64",
             ),
             image_name=self.ecr_repository.repository_url.apply(

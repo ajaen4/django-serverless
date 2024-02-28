@@ -1,16 +1,13 @@
-from typing import List
-
-import pulumi
 from pulumi import ResourceOptions
 from pulumi_aws import ec2
 
-from networking.subnet_type import SubnetType
+from input_schemas import VPCCfg, SubnetType
 
 
 class Networking:
-    def __init__(self, config: pulumi.Config):
-        self.vpc_name = config.get("vpc_name")
-        self.add_nat = config.get_bool("add_nat", False)
+    def __init__(self, vpc_cfg: VPCCfg):
+        self.vpc_name = vpc_cfg.vpc_name
+        self.add_nat = vpc_cfg.add_nat
         self.create_resources()
 
     def create_resources(self):
@@ -55,7 +52,7 @@ class Networking:
             nat_gateway = ec2.NatGateway(
                 f"{self.vpc_name}-nat-gateway",
                 allocation_id=eip.id,
-                subnet_id=self.public_subnet.id,
+                subnet_id=self.public_subnet_a.id,
                 tags={
                     "Name": f"{self.vpc_name}-nat-gateway",
                 },
@@ -140,7 +137,7 @@ class Networking:
     def get_vpc_id(self) -> ec2.Vpc.id:
         return self.vpc.id
 
-    def get_subnet_ids(self, subnet_type: SubnetType) -> List[ec2.Subnet.id]:
+    def get_subnet_ids(self, subnet_type: SubnetType) -> list[ec2.Subnet.id]:
         if subnet_type == SubnetType.PUBLIC:
             return [self.public_subnet_a.id, self.public_subnet_b.id]
         elif subnet_type == SubnetType.PRIVATE:
