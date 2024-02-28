@@ -1,2 +1,2 @@
--e django_app/
+-e django_services/django_learning/
 -e pulumi/

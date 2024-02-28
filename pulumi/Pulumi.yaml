@@ -1,6 +1,6 @@
-name: django-learning-infra
+name: django-serverless-infra
 runtime:
   name: python
 description: Infra for deploying a Django app on an ECS service
 globalTags:
-  project_name: "django-learning"
+  project_name: "django-serverless"

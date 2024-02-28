@@ -1,39 +1,42 @@
 import json
 
 import pulumi
-from pulumi_aws import ec2, lb, iam, cloudwatch, ecs
+from pulumi_aws import ec2, lb, cloudwatch, ecs, iam
 
-from networking import Networking, SubnetType
+from networking import Networking
+from input_schemas import SubnetType, DjangoServiceCfg
 from .repository import Repository
 from .image import Image
 
 
 class ECSService:
-    def __init__(self, networking: Networking):
+    def __init__(
+        self,
+        networking: Networking,
+        django_srv_cfg: DjangoServiceCfg,
+        roles: dict[str, iam.Role],
+    ):
         self.networking = networking
+        self.django_srv_cfg = django_srv_cfg
+        self.roles = roles
         self.create_resources()
 
     def create_resources(self):
-        self.create_roles()
         self.create_networking()
         self.create_ecs_service()
 
     def create_networking(self):
+        service_name = self.django_srv_cfg.service_name.replace("_", "-")
+
         lb_sg = ec2.SecurityGroup(
-            "lb-sg",
-            name="lb-sg",
+            f"{service_name}-lb-sg",
+            name=f"{service_name}-lb-sg",
             description="Controls access to the ALB",
             vpc_id=self.networking.get_vpc_id(),
             ingress=[
                 ec2.SecurityGroupIngressArgs(
-                    from_port=80,
-                    to_port=80,
-                    protocol="tcp",
-                    cidr_blocks=["0.0.0.0/0"],
-                ),
-                ec2.SecurityGroupIngressArgs(
-                    from_port=443,
-                    to_port=443,
+                    from_port=self.django_srv_cfg.lb_port,
+                    to_port=self.django_srv_cfg.lb_port,
                     protocol="tcp",
                     cidr_blocks=["0.0.0.0/0"],
                 ),
@@ -47,13 +50,13 @@ class ECSService:
                 ),
             ],
             tags={
-                "Name": "lb-sg",
+                "Name": f"{service_name}-lb-sg",
             },
         )
 
         self.ecs_sg = ec2.SecurityGroup(
-            "ecs-sg",
-            name="ecs-sg",
+            f"{service_name}-sg",
+            name=f"{service_name}-ecs-sg",
             description="Controls access to the ECS Service",
             vpc_id=self.networking.get_vpc_id(),
             ingress=[
@@ -78,8 +81,8 @@ class ECSService:
         )
 
         django_lb = lb.LoadBalancer(
-            "django-lb",
-            name="django-lb",
+            f"{service_name}-lb",
+            name=f"{service_name}-lb",
             load_balancer_type="application",
             internal=False,
             security_groups=[lb_sg.id],
@@ -87,9 +90,9 @@ class ECSService:
         )
 
         self.django_tg = lb.TargetGroup(
-            "django-service-tg",
-            name="django-service-tg",
-            port=80,
+            f"{service_name}-service-tg",
+            name=f"{service_name}-service-tg",
+            port=self.django_srv_cfg.lb_port,
             protocol="HTTP",
             vpc_id=self.networking.get_vpc_id(),
             target_type="ip",
@@ -105,9 +108,9 @@ class ECSService:
         )
 
         lb.Listener(
-            "django-lb-listener",
+            f"{service_name}-lb-listener",
             load_balancer_arn=django_lb.arn,
-            port=80,
+            port=self.django_srv_cfg.lb_port,
             default_actions=[
                 lb.ListenerDefaultActionArgs(
                     type="forward",
@@ -116,112 +119,26 @@ class ECSService:
             ],
         )
 
-    def create_roles(self):
-        ecs_role_policy_document = json.dumps(
-            {
-                "Version": "2008-10-17",
-                "Statement": [
-                    {
-                        "Action": "sts:AssumeRole",
-                        "Principal": {"Service": "ecs-tasks.amazonaws.com"},
-                        "Effect": "Allow",
-                    }
-                ],
-            }
-        )
-
-        ecs_execution_policy_document = json.dumps(
-            {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Effect": "Allow",
-                        "Action": [
-                            "ecs:StartTask",
-                            "ecs:StopTask",
-                            "ecs:DescribeTasks",
-                            "ecr:GetAuthorizationToken",
-                            "ecr:BatchCheckLayerAvailability",
-                            "ecr:GetDownloadUrlForLayer",
-                            "ecr:BatchGetImage",
-                            "logs:CreateLogStream",
-                            "logs:PutLogEvents",
-                            "elasticfilesystem:ClientMount",
-                            "elasticfilesystem:ClientWrite",
-                            "elasticfilesystem:ClientRootAccess",
-                            "elasticfilesystem:DescribeFileSystems",
-                        ],
-                        "Resource": "*",
-                    }
-                ],
-            }
-        )
-
-        ecs_task_role_policy_document = json.dumps(
-            {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Effect": "Allow",
-                        "Action": [
-                            "elasticloadbalancing:Describe*",
-                            "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
-                            "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
-                            "ec2:Describe*",
-                            "ec2:AuthorizeSecurityGroupIngress",
-                            "elasticloadbalancing:RegisterTargets",
-                            "elasticloadbalancing:DeregisterTargets",
-                            "elasticfilesystem:ClientMount",
-                            "elasticfilesystem:ClientWrite",
-                            "elasticfilesystem:ClientRootAccess",
-                            "elasticfilesystem:DescribeFileSystems",
-                        ],
-                        "Resource": "*",
-                    }
-                ],
-            }
-        )
-
-        self.ecs_execution_role = iam.Role(
-            "ecs-execution-role",
-            name="ecs_execution_role",
-            assume_role_policy=ecs_role_policy_document,
-        )
-
-        iam.RolePolicy(
-            "ecs-execution-role-policy",
-            name="ecs_execution_role_policy",
-            policy=ecs_execution_policy_document,
-            role=self.ecs_execution_role.id,
-        )
-
-        self.ecs_task_role = iam.Role(
-            "ecs-task-role",
-            name="ecs_task_role",
-            assume_role_policy=ecs_role_policy_document,
-        )
-
-        iam.RolePolicy(
-            "ecs-task-role-policy",
-            name="ecs_task_role_policy",
-            policy=ecs_task_role_policy_document,
-            role=self.ecs_task_role.id,
-        )
-
     def create_ecs_service(self):
-        CONTAINER_NAME = "django-app"
+        service_name = self.django_srv_cfg.service_name
 
-        repository = Repository(f"{CONTAINER_NAME}-repository")
-        image = Image(CONTAINER_NAME, repository.get_repository())
+        repository = Repository(f"{service_name}-repository")
+        image = Image(
+            service_name,
+            self.django_srv_cfg.django_project,
+            repository.get_repository(),
+        )
         image_uri = image.push_image("0.0.1")
 
         django_log_group = cloudwatch.LogGroup(
-            "django-log-group",
-            name=f"/ecs/{CONTAINER_NAME}",
+            f"{service_name}-log-group",
+            name=f"/ecs/{service_name}",
             retention_in_days=30,
         )
 
-        ecs_cluster = ecs.Cluster("django-app-cluster", name="django-app-cluster")
+        ecs_cluster = ecs.Cluster(
+            f"{service_name}-cluster", name=f"{service_name}-cluster"
+        )
 
         container_definitions_template = pulumi.Output.all(
             image_uri=image_uri, log_group_name=django_log_group.name
@@ -229,18 +146,23 @@ class ECSService:
             lambda args: json.dumps(
                 [
                     {
-                        "name": CONTAINER_NAME,
+                        "name": service_name,
                         "image": args["image_uri"],
                         "essential": True,
                         "cpu": 10,
                         "memory": 512,
-                        "portMappings": [{"containerPort": 8000, "protocol": "tcp"}],
+                        "portMappings": [
+                            {
+                                "containerPort": self.django_srv_cfg.container_port,
+                                "protocol": "tcp",
+                            }
+                        ],
                         "command": [
                             "gunicorn",
                             "-w",
                             "3",
                             "-b",
-                            ":8000",
+                            f":{self.django_srv_cfg.container_port}",
                             "django_learning.wsgi:application",
                         ],
                         "environment": [],
@@ -249,7 +171,7 @@ class ECSService:
                             "options": {
                                 "awslogs-group": args["log_group_name"],
                                 "awslogs-region": "eu-west-1",
-                                "awslogs-stream-prefix": f"{CONTAINER_NAME}-log-stream",
+                                "awslogs-stream-prefix": f"{service_name}-log-stream",
                             },
                         },
                     }
@@ -258,20 +180,20 @@ class ECSService:
         )
 
         ecs_task_definition = ecs.TaskDefinition(
-            "django-app-tf",
-            family=CONTAINER_NAME,
+            f"{service_name}-tf",
+            family=service_name,
             network_mode="awsvpc",
             requires_compatibilities=["FARGATE"],
-            cpu=256,
-            memory=512,
-            execution_role_arn=self.ecs_execution_role.arn,
-            task_role_arn=self.ecs_task_role.arn,
+            cpu=self.django_srv_cfg.cpu,
+            memory=self.django_srv_cfg.memory,
+            execution_role_arn=self.roles["ecs_execution_role"].arn,
+            task_role_arn=self.roles["ecs_task_role"].arn,
             container_definitions=container_definitions_template,
         )
 
         ecs.Service(
-            "django-app-service",
-            name="django-app-service",
+            f"{service_name}-service",
+            name=f"{service_name}-service",
             cluster=ecs_cluster.id,
             task_definition=ecs_task_definition.arn,
             launch_type="FARGATE",
@@ -288,8 +210,8 @@ class ECSService:
             load_balancers=[
                 ecs.ServiceLoadBalancerArgs(
                     target_group_arn=self.django_tg.arn,
-                    container_name=CONTAINER_NAME,
-                    container_port=8000,
+                    container_name=service_name,
+                    container_port=self.django_srv_cfg.container_port,
                 )
             ],
         )
