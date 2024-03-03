@@ -37,13 +37,24 @@ class Networking:
             },
         )
 
-        self.private_subnet = ec2.Subnet(
-            "private-subnet",
+        self.private_subnet_a = ec2.Subnet(
+            "private-subnet-a",
             vpc_id=self.vpc.id,
             cidr_block="10.0.3.0/24",
             tags={
-                "Name": "private-subnet",
+                "Name": "private-subnet-a",
             },
+            availability_zone="eu-west-1a",
+        )
+
+        self.private_subnet_b = ec2.Subnet(
+            "private-subnet-b",
+            vpc_id=self.vpc.id,
+            cidr_block="10.0.4.0/24",
+            tags={
+                "Name": "private-subnet-b",
+            },
+            availability_zone="eu-west-1b",
         )
 
         if self.add_nat:
@@ -84,8 +95,14 @@ class Networking:
             )
 
         ec2.RouteTableAssociation(
-            "private-rt-association",
-            subnet_id=self.private_subnet.id,
+            "private-rt-association-a",
+            subnet_id=self.private_subnet_a.id,
+            route_table_id=private_route_table.id,
+        )
+
+        ec2.RouteTableAssociation(
+            "private-rt-association-b",
+            subnet_id=self.private_subnet_b.id,
             route_table_id=private_route_table.id,
         )
 
@@ -116,24 +133,6 @@ class Networking:
             route_table_id=public_route_table.id,
         )
 
-        self.security_group = ec2.SecurityGroup(
-            f"{self.vpc_name}-sg",
-            description="Allow all outbound",
-            vpc_id=self.vpc.id,
-            egress=[
-                ec2.SecurityGroupEgressArgs(
-                    from_port=0,
-                    to_port=0,
-                    protocol="-1",
-                    cidr_blocks=["0.0.0.0/0"],
-                    ipv6_cidr_blocks=["::/0"],
-                )
-            ],
-            tags={
-                "Name": f"{self.vpc_name}-sg",
-            },
-        )
-
     def get_vpc_id(self) -> ec2.Vpc.id:
         return self.vpc.id
 
@@ -141,6 +140,6 @@ class Networking:
         if subnet_type == SubnetType.PUBLIC:
             return [self.public_subnet_a.id, self.public_subnet_b.id]
         elif subnet_type == SubnetType.PRIVATE:
-            return [self.private_subnet.id]
+            return [self.private_subnet_a.id, self.private_subnet_b.id]
         else:
             raise ValueError(f"Invalid subnet type: {subnet_type}")

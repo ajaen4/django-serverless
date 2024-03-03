@@ -1,19 +1,17 @@
 config:
   aws:region: eu-west-1
   vpc_name: django-serverless
-  add_nat: false
+  add_nat: true
   django_services:
     django_learning:
       django_project: django_learning
-      cpu: 256
-      memory: 512
-      lb_port: 80
-      container_port: 8000
-      desired_count: 1
-    django_learning_2:
-      django_project: django_learning
-      cpu: 256
-      memory: 512
-      lb_port: 80
-      container_port: 8000
-      desired_count: 1
+      backend:
+        cpu: 256
+        memory: 512
+        desired_count: 3
+        lb_port: 80
+        container_port: 8000
+      db:
+        engine: aurora-postgresql
+        family: db.t3.medium
+        version: "15.2"

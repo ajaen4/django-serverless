@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from pulumi import Config
-from .django_srv_cfg import DjangoServiceCfg
+from .django_srv_cfg import DjangoServiceCfg, BackendCfg, DBCfg
 from .vpc_cfg import VPCCfg
 
 
@@ -38,23 +38,36 @@ class Input:
         for name, config in django_srvs_cfg.items():
             django_project = config["django_project"]
 
+            backend_cfg = config.get("backend")
             extra_container_args = dict()
-            if "cpu" in config:
-                extra_container_args["cpu"] = config["cpu"]
-            if "memory" in config:
-                extra_container_args["memory"] = config["memory"]
-            if "lb_port" in config:
-                extra_container_args["lb_port"] = config["lb_port"]
-            if "container_port" in config:
-                extra_container_args["container_port"] = config["container_port"]
-            if "desired_count" in config:
-                extra_container_args["desired_count"] = config["desired_count"]
+            if "cpu" in backend_cfg:
+                extra_container_args["cpu"] = backend_cfg["cpu"]
+            if "memory" in backend_cfg:
+                extra_container_args["memory"] = backend_cfg["memory"]
+            if "lb_port" in backend_cfg:
+                extra_container_args["lb_port"] = backend_cfg["lb_port"]
+            if "container_port" in backend_cfg:
+                extra_container_args["container_port"] = backend_cfg["container_port"]
+            if "desired_count" in backend_cfg:
+                extra_container_args["desired_count"] = backend_cfg["desired_count"]
+
+            backend_cfg_fmt = BackendCfg(
+                **extra_container_args,
+            )
+
+            db_cfg = config.get("db")
+            db_cfg_fmt = DBCfg(
+                engine=db_cfg["engine"],
+                version=db_cfg["version"],
+                family=db_cfg["family"],
+            )
 
             django_srvs_cfg_fmt.append(
                 DjangoServiceCfg(
                     service_name=name,
                     django_project=django_project,
-                    **extra_container_args,
+                    backend_cfg=backend_cfg_fmt,
+                    db_cfg=db_cfg_fmt,
                 )
             )
 
