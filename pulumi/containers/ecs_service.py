@@ -7,6 +7,7 @@ from networking import Networking
 from input_schemas import SubnetType, DjangoServiceCfg
 from .repository import Repository
 from .image import Image
+from dbs.rds import RDS
 
 
 class ECSService:
@@ -23,20 +24,22 @@ class ECSService:
 
     def create_resources(self):
         self.create_networking()
+        self.create_db()
         self.create_ecs_service()
 
     def create_networking(self):
-        service_name = self.django_srv_cfg.service_name.replace("_", "-")
+        SERVICE_NAME = self.django_srv_cfg.service_name.replace("_", "-")
+        LB_PORT = self.django_srv_cfg.backend_cfg.lb_port
 
         lb_sg = ec2.SecurityGroup(
-            f"{service_name}-lb-sg",
-            name=f"{service_name}-lb-sg",
+            f"{SERVICE_NAME}-lb-sg",
+            name=f"{SERVICE_NAME}-lb-sg",
             description="Controls access to the ALB",
             vpc_id=self.networking.get_vpc_id(),
             ingress=[
                 ec2.SecurityGroupIngressArgs(
-                    from_port=self.django_srv_cfg.lb_port,
-                    to_port=self.django_srv_cfg.lb_port,
+                    from_port=LB_PORT,
+                    to_port=LB_PORT,
                     protocol="tcp",
                     cidr_blocks=["0.0.0.0/0"],
                 ),
@@ -50,13 +53,13 @@ class ECSService:
                 ),
             ],
             tags={
-                "Name": f"{service_name}-lb-sg",
+                "Name": f"{SERVICE_NAME}-lb-sg",
             },
         )
 
         self.ecs_sg = ec2.SecurityGroup(
-            f"{service_name}-sg",
-            name=f"{service_name}-ecs-sg",
+            f"{SERVICE_NAME}-sg",
+            name=f"{SERVICE_NAME}-ecs-sg",
             description="Controls access to the ECS Service",
             vpc_id=self.networking.get_vpc_id(),
             ingress=[
@@ -76,13 +79,13 @@ class ECSService:
                 ),
             ],
             tags={
-                "Name": "ecs-sg",
+                "Name": f"{SERVICE_NAME}-ecs-sg",
             },
         )
 
         django_lb = lb.LoadBalancer(
-            f"{service_name}-lb",
-            name=f"{service_name}-lb",
+            f"{SERVICE_NAME}-lb",
+            name=f"{SERVICE_NAME}-lb",
             load_balancer_type="application",
             internal=False,
             security_groups=[lb_sg.id],
@@ -90,9 +93,9 @@ class ECSService:
         )
 
         self.django_tg = lb.TargetGroup(
-            f"{service_name}-service-tg",
-            name=f"{service_name}-service-tg",
-            port=self.django_srv_cfg.lb_port,
+            f"{SERVICE_NAME}-service-tg",
+            name=f"{SERVICE_NAME}-service-tg",
+            port=LB_PORT,
             protocol="HTTP",
             vpc_id=self.networking.get_vpc_id(),
             target_type="ip",
@@ -108,9 +111,9 @@ class ECSService:
         )
 
         lb.Listener(
-            f"{service_name}-lb-listener",
+            f"{SERVICE_NAME}-lb-listener",
             load_balancer_arn=django_lb.arn,
-            port=self.django_srv_cfg.lb_port,
+            port=LB_PORT,
             default_actions=[
                 lb.ListenerDefaultActionArgs(
                     type="forward",
@@ -119,59 +122,67 @@ class ECSService:
             ],
         )
 
-    def create_ecs_service(self):
-        service_name = self.django_srv_cfg.service_name
+    def create_db(self):
+        self.db = RDS(self.networking, self.ecs_sg, self.django_srv_cfg)
 
-        repository = Repository(f"{service_name}-repository")
+    def create_ecs_service(self):
+        SERVICE_NAME = self.django_srv_cfg.service_name
+        CONT_PORT = self.django_srv_cfg.backend_cfg.container_port
+
+        repository = Repository(f"{SERVICE_NAME}-repository")
         image = Image(
-            service_name,
+            SERVICE_NAME,
             self.django_srv_cfg.django_project,
             repository.get_repository(),
         )
         image_uri = image.push_image("0.0.1")
 
         django_log_group = cloudwatch.LogGroup(
-            f"{service_name}-log-group",
-            name=f"/ecs/{service_name}",
+            f"{SERVICE_NAME}-log-group",
+            name=f"/ecs/{SERVICE_NAME}",
             retention_in_days=30,
         )
 
         ecs_cluster = ecs.Cluster(
-            f"{service_name}-cluster", name=f"{service_name}-cluster"
+            f"{SERVICE_NAME}-cluster", name=f"{SERVICE_NAME}-cluster"
         )
 
         container_definitions_template = pulumi.Output.all(
-            image_uri=image_uri, log_group_name=django_log_group.name
+            image_uri=image_uri,
+            log_group_name=django_log_group.name,
+            host=self.db.get_host(),
         ).apply(
             lambda args: json.dumps(
                 [
                     {
-                        "name": service_name,
+                        "name": SERVICE_NAME,
                         "image": args["image_uri"],
                         "essential": True,
                         "cpu": 10,
                         "memory": 512,
                         "portMappings": [
                             {
-                                "containerPort": self.django_srv_cfg.container_port,
+                                "containerPort": CONT_PORT,
                                 "protocol": "tcp",
                             }
                         ],
-                        "command": [
-                            "gunicorn",
-                            "-w",
-                            "3",
-                            "-b",
-                            f":{self.django_srv_cfg.container_port}",
-                            "django_learning.wsgi:application",
+                        "command": [SERVICE_NAME, str(CONT_PORT)],
+                        "environment": [
+                            {
+                                "name": "ENVIRONMENT",
+                                "value": "PROD",
+                            },
+                            {
+                                "name": "DB_HOST",
+                                "value": args["host"],
+                            },
                         ],
-                        "environment": [],
                         "logConfiguration": {
                             "logDriver": "awslogs",
                             "options": {
                                 "awslogs-group": args["log_group_name"],
                                 "awslogs-region": "eu-west-1",
-                                "awslogs-stream-prefix": f"{service_name}-log-stream",
+                                "awslogs-stream-prefix": f"{SERVICE_NAME}-log-stream",
                             },
                         },
                     }
@@ -180,27 +191,27 @@ class ECSService:
         )
 
         ecs_task_definition = ecs.TaskDefinition(
-            f"{service_name}-tf",
-            family=service_name,
+            f"{SERVICE_NAME}-tf",
+            family=SERVICE_NAME,
             network_mode="awsvpc",
             requires_compatibilities=["FARGATE"],
-            cpu=self.django_srv_cfg.cpu,
-            memory=self.django_srv_cfg.memory,
+            cpu=self.django_srv_cfg.backend_cfg.cpu,
+            memory=self.django_srv_cfg.backend_cfg.memory,
             execution_role_arn=self.roles["ecs_execution_role"].arn,
             task_role_arn=self.roles["ecs_task_role"].arn,
             container_definitions=container_definitions_template,
         )
 
         ecs.Service(
-            f"{service_name}-service",
-            name=f"{service_name}-service",
+            f"{SERVICE_NAME}-service",
+            name=f"{SERVICE_NAME}-service",
             cluster=ecs_cluster.id,
             task_definition=ecs_task_definition.arn,
             launch_type="FARGATE",
-            desired_count=1,
+            desired_count=self.django_srv_cfg.backend_cfg.desired_count,
             network_configuration=ecs.ServiceNetworkConfigurationArgs(
                 subnets=[
-                    *self.networking.get_subnet_ids(SubnetType.PUBLIC),
+                    *self.networking.get_subnet_ids(SubnetType.PRIVATE),
                 ],
                 security_groups=[
                     self.ecs_sg.id,
@@ -210,8 +221,8 @@ class ECSService:
             load_balancers=[
                 ecs.ServiceLoadBalancerArgs(
                     target_group_arn=self.django_tg.arn,
-                    container_name=service_name,
-                    container_port=self.django_srv_cfg.container_port,
+                    container_name=SERVICE_NAME,
+                    container_port=CONT_PORT,
                 )
             ],
         )
