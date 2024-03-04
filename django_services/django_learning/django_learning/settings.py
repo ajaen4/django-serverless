@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "polls.apps.PollsConfig",
+    "management.apps.ManagementConfig",
 ]
 
 MIDDLEWARE = [
@@ -84,7 +85,6 @@ WSGI_APPLICATION = "django_learning.wsgi.application"
 AWS_DJANGO_ENG_MAP = {
     "aurora-mysql": "django.db.backends.mysql",
     "aurora-postgresql": "django.db.backends.postgresql",
-    "mysql": "django.db.backends.mysql",
 }
 
 DATABASES = {"default": {}}
