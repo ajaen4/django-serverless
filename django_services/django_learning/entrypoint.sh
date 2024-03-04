@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 SERVICE_NAME="$1"
 CONTAINER_PORT="$2"
 SUPERUSER_USERNAME="$3"

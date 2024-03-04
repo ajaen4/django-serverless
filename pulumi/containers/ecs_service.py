@@ -154,8 +154,6 @@ class ECSService:
         self.super_user_password = random.RandomPassword(
             f"{SERVICE_NAME}-super-user-password",
             length=16,
-            special=True,
-            override_special="_%@",
         )
 
         container_definitions_template = pulumi.Output.all(
@@ -254,4 +252,5 @@ class ECSService:
                     container_port=CONT_PORT,
                 )
             ],
+            opts=pulumi.ResourceOptions(depends_on=[self.db.get_db_instance()])
         )
