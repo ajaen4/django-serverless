@@ -53,8 +53,6 @@ class RDS:
         self.random_password = random.RandomPassword(
             f"{SERVICE_NAME}-db-password",
             length=16,
-            special=True,
-            override_special="_%@",
         )
 
         self.cluster = rds.Cluster(
@@ -69,7 +67,7 @@ class RDS:
             skip_final_snapshot=True,
         )
 
-        rds.ClusterInstance(
+        self.db_instance = rds.ClusterInstance(
             f"{SERVICE_NAME}-rds-instance",
             cluster_identifier=self.cluster.id,
             instance_class=self.db_cfg.family,
@@ -83,3 +81,6 @@ class RDS:
 
     def get_password(self):
         return self.random_password.result
+
+    def get_db_instance(self):
+        return self.db_instance
