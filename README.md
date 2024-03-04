@@ -13,7 +13,9 @@ Technologies used:
 
 ## Architecture
 
-![Alt text](images/django-serverless.png?raw=true "Architecture")
+<p align="center">
+  <img src="images/django-serverless.png?raw=true" alt="Architecture">
+</p>
 
 Components per Django project:
 
