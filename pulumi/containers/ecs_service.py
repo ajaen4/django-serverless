@@ -2,6 +2,7 @@ import json
 
 import pulumi
 from pulumi_aws import ec2, lb, cloudwatch, ecs, iam
+import pulumi_random as random
 
 from networking import Networking
 from input_schemas import SubnetType, DjangoServiceCfg
@@ -126,13 +127,16 @@ class ECSService:
         self.db = RDS(self.networking, self.ecs_sg, self.django_srv_cfg)
 
     def create_ecs_service(self):
+        backend_cfg = self.django_srv_cfg.backend_cfg
+        db_cfg = self.django_srv_cfg.db_cfg
+
         SERVICE_NAME = self.django_srv_cfg.service_name
-        CONT_PORT = self.django_srv_cfg.backend_cfg.container_port
+        CONT_PORT = backend_cfg.container_port
 
         repository = Repository(f"{SERVICE_NAME}-repository")
         image = Image(
             SERVICE_NAME,
-            self.django_srv_cfg.django_project,
+            backend_cfg.django_project,
             repository.get_repository(),
         )
         image_uri = image.push_image("0.0.1")
@@ -147,10 +151,19 @@ class ECSService:
             f"{SERVICE_NAME}-cluster", name=f"{SERVICE_NAME}-cluster"
         )
 
+        self.super_user_password = random.RandomPassword(
+            f"{SERVICE_NAME}-super-user-password",
+            length=16,
+            special=True,
+            override_special="_%@",
+        )
+
         container_definitions_template = pulumi.Output.all(
             image_uri=image_uri,
             log_group_name=django_log_group.name,
             host=self.db.get_host(),
+            db_password=self.db.get_password(),
+            super_user_password=self.super_user_password.result,
         ).apply(
             lambda args: json.dumps(
                 [
@@ -158,15 +171,15 @@ class ECSService:
                         "name": SERVICE_NAME,
                         "image": args["image_uri"],
                         "essential": True,
-                        "cpu": 10,
-                        "memory": 512,
+                        "cpu": backend_cfg.cpu,
+                        "memory": backend_cfg.memory,
                         "portMappings": [
                             {
                                 "containerPort": CONT_PORT,
                                 "protocol": "tcp",
                             }
                         ],
-                        "command": [SERVICE_NAME, str(CONT_PORT)],
+                        "command": [SERVICE_NAME, str(CONT_PORT), backend_cfg.super_user.username, backend_cfg.super_user.email, args["super_user_password"]],
                         "environment": [
                             {
                                 "name": "ENVIRONMENT",
@@ -175,6 +188,22 @@ class ECSService:
                             {
                                 "name": "DB_HOST",
                                 "value": args["host"],
+                            },
+                            {
+                                "name": "DB_PORT",
+                                "value": str(db_cfg.port),
+                            },
+                            {
+                                "name": "DB_PASSWORD",
+                                "value": args["db_password"],
+                            },
+                            {
+                                "name": "AWS_DB_ENGINE",
+                                "value": db_cfg.engine,
+                            },
+                            {
+                                "name": "DB_NAME",
+                                "value": db_cfg.db_name,
                             },
                         ],
                         "logConfiguration": {
@@ -195,8 +224,8 @@ class ECSService:
             family=SERVICE_NAME,
             network_mode="awsvpc",
             requires_compatibilities=["FARGATE"],
-            cpu=self.django_srv_cfg.backend_cfg.cpu,
-            memory=self.django_srv_cfg.backend_cfg.memory,
+            cpu=backend_cfg.cpu,
+            memory=backend_cfg.memory,
             execution_role_arn=self.roles["ecs_execution_role"].arn,
             task_role_arn=self.roles["ecs_task_role"].arn,
             container_definitions=container_definitions_template,
@@ -208,7 +237,7 @@ class ECSService:
             cluster=ecs_cluster.id,
             task_definition=ecs_task_definition.arn,
             launch_type="FARGATE",
-            desired_count=self.django_srv_cfg.backend_cfg.desired_count,
+            desired_count=backend_cfg.desired_count,
             network_configuration=ecs.ServiceNetworkConfigurationArgs(
                 subnets=[
                     *self.networking.get_subnet_ids(SubnetType.PRIVATE),

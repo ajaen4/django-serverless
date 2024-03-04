@@ -2,7 +2,15 @@ from dataclasses import dataclass
 
 
 @dataclass
+class SuperUserCfg:
+    username: str
+    email: str
+
+
+@dataclass
 class BackendCfg:
+    django_project: str
+    super_user: SuperUserCfg
     cpu: int = 256
     memory: int = 512
     lb_port: int = 80
@@ -15,11 +23,12 @@ class DBCfg:
     engine: str
     version: str
     family: str
+    db_name: str
+    port: str
 
 
 @dataclass
 class DjangoServiceCfg:
     service_name: str
-    django_project: str
     backend_cfg: BackendCfg
     db_cfg: DBCfg

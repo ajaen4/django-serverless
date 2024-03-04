@@ -1,4 +1,5 @@
 from pulumi_aws import ec2, rds
+import pulumi_random as random
 
 from input_schemas import DjangoServiceCfg
 from networking import Networking
@@ -12,12 +13,13 @@ class RDS:
         backend_sg: ec2.SecurityGroup,
         django_srv_cfg: DjangoServiceCfg,
     ):
-        self.django_srv_cfg = django_srv_cfg
+        self.service_name = django_srv_cfg.service_name
+        self.db_cfg = django_srv_cfg.db_cfg
         self.networking = networking
         self.create_resources(backend_sg)
 
     def create_resources(self, backend_sg: ec2.SecurityGroup):
-        SERVICE_NAME = self.django_srv_cfg.service_name.replace("_", "-")
+        SERVICE_NAME = self.service_name.replace("_", "-")
 
         db_sg = ec2.SecurityGroup(
             f"{SERVICE_NAME}-db-sg",
@@ -27,8 +29,8 @@ class RDS:
             ingress=[
                 ec2.SecurityGroupIngressArgs(
                     protocol="tcp",
-                    from_port="5432",
-                    to_port="5432",
+                    from_port=self.db_cfg.port,
+                    to_port=self.db_cfg.port,
                     security_groups=[backend_sg.id],
                 ),
             ],
@@ -48,26 +50,36 @@ class RDS:
             description="Subnet group for my RDS instance",
         )
 
+        self.random_password = random.RandomPassword(
+            f"{SERVICE_NAME}-db-password",
+            length=16,
+            special=True,
+            override_special="_%@",
+        )
+
         self.cluster = rds.Cluster(
             f"{SERVICE_NAME}-cluster",
-            database_name=SERVICE_NAME.replace("-", ""),
-            engine=self.django_srv_cfg.db_cfg.engine,
-            engine_version=self.django_srv_cfg.db_cfg.version,
+            database_name=self.db_cfg.db_name,
+            engine=self.db_cfg.engine,
+            engine_version=self.db_cfg.version,
             db_subnet_group_name=db_subnet_group.name,
             vpc_security_group_ids=[db_sg.id],
             master_username="db_user",
-            master_password="db_password",
+            master_password=self.random_password.result,
             skip_final_snapshot=True,
         )
 
         rds.ClusterInstance(
             f"{SERVICE_NAME}-rds-instance",
             cluster_identifier=self.cluster.id,
-            instance_class=self.django_srv_cfg.db_cfg.family,
-            engine=self.django_srv_cfg.db_cfg.engine,
-            engine_version=self.django_srv_cfg.db_cfg.version,
+            instance_class=self.db_cfg.family,
+            engine=self.db_cfg.engine,
+            engine_version=self.db_cfg.version,
             db_subnet_group_name=db_subnet_group.name,
         )
 
     def get_host(self):
         return self.cluster.endpoint
+
+    def get_password(self):
+        return self.random_password.result

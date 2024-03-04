@@ -12,12 +12,14 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import environ
+import os
 
 env = environ.Env()
 environ.Env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
@@ -79,19 +81,26 @@ WSGI_APPLICATION = "django_learning.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+AWS_DJANGO_ENG_MAP = {
+    "aurora-mysql": "django.db.backends.mysql",
+    "aurora-postgresql": "django.db.backends.postgresql",
+    "mysql": "django.db.backends.mysql",
+}
+
 DATABASES = {"default": {}}
 
-ENVIRONMENT = env("ENVIRONMENT", default="DEV")
-print(f"ENVIRONMENT: {ENVIRONMENT}")
+ENVIRONMENT = env("ENVIRONMENT")
+
 if ENVIRONMENT == "PROD":
+    AWS_DB_ENGINE = env("AWS_DB_ENGINE")
     DATABASES["default"].update(
         {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": "djangolearning",
+            "ENGINE": AWS_DJANGO_ENG_MAP[AWS_DB_ENGINE],
+            "NAME": env("DB_NAME"),
             "USER": "db_user",
-            "PASSWORD": "db_password",
+            "PASSWORD": env("DB_PASSWORD"),
             "HOST": env("DB_HOST"),
-            "PORT": "5432",
+            "PORT": env("DB_PORT"),
         }
     )
 else:
