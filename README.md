@@ -26,7 +26,13 @@ Components per Django project:
 
 ## Requirements
 
-You must have python 3.11 installed, that's it!
+## Requirements
+
+- You must own an AWS account and have an Access Key to be able to authenticate. You need this so every script or deployment is done with the correct credentials. See [here](https://docs.aws.amazon.com/cli/latest/reference/configure/) steps to configure your credentials.
+
+- Versions:
+    - Pulumi >=3.0.0,<4.0.0
+    - Python = 3.11
 
 ## Installation
 
