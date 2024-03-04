@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from pulumi import Config
-from .django_srv_cfg import DjangoServiceCfg, BackendCfg, DBCfg
+from .django_srv_cfg import DjangoServiceCfg, BackendCfg, DBCfg, SuperUserCfg
 from .vpc_cfg import VPCCfg
 
 
@@ -36,8 +36,6 @@ class Input:
         django_srvs_cfg_fmt = list()
 
         for name, config in django_srvs_cfg.items():
-            django_project = config["django_project"]
-
             backend_cfg = config.get("backend")
             extra_container_args = dict()
             if "cpu" in backend_cfg:
@@ -51,7 +49,15 @@ class Input:
             if "desired_count" in backend_cfg:
                 extra_container_args["desired_count"] = backend_cfg["desired_count"]
 
+            super_user_cfg = backend_cfg["super_user"]
+            super_user_cfg_fmt = SuperUserCfg(
+                username=super_user_cfg["username"],
+                email=super_user_cfg["email"],
+            )
+
             backend_cfg_fmt = BackendCfg(
+                django_project=backend_cfg["django_project"],
+                super_user=super_user_cfg_fmt,
                 **extra_container_args,
             )
 
@@ -60,12 +66,13 @@ class Input:
                 engine=db_cfg["engine"],
                 version=db_cfg["version"],
                 family=db_cfg["family"],
+                db_name=db_cfg["db_name"],
+                port=db_cfg["port"],
             )
 
             django_srvs_cfg_fmt.append(
                 DjangoServiceCfg(
                     service_name=name,
-                    django_project=django_project,
                     backend_cfg=backend_cfg_fmt,
                     db_cfg=db_cfg_fmt,
                 )
