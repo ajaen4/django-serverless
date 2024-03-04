@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This project main objective is to provide Django developers an easy way of deploying several Django project.
+This project's main objective is to provide Django developers an easy way of deploying several Django project on AWS.
 
 ## Tech Stack
 
@@ -27,8 +27,12 @@ Components per Django project:
 ## Project's structure
 
 - django_services: Django projects implemented.
-  - <django_project_name>:
-    - 
+  <django_project_name>:
+    - ...
+    - [management](https://github.com/ajaen4/django-serverless/tree/main/django_services/django_learning/management): app that must be copied and installed into any new project. Used to be able to use custom admin commands.
+    - [entrypoint.sh](https://github.com/ajaen4/django-serverless/blob/main/django_services/django_learning/entrypoint.sh): must be copied into any new project. Used to initialize correctly the server on AWS.
+    - [Dockerfile](https://github.com/ajaen4/django-serverless/blob/main/django_services/django_learning/Dockerfile): must be copied into any new project. Used to deploy the server on AWS with all the necessary dependencies.
+    - requirements.txt: must be included with the necessary dependencies for each Django project + gunicorn==21.2.0.
 - pulumi: Infrastructure as Code that deploys the infrastructure needed for each Django project.
   - Pulumi.main.yaml: config file to let Pulumi know the characteristics of each of your projects (cpu, memory, number of workers, db preferences...)
 
@@ -66,8 +70,8 @@ Some things to take into account before developing with this repo:
 - This repo is not production ready:
   - Passwords for the Django superuser and the DB user are generated randomnly but passed as commands and env variable context in plain text.
   - The service doesn't autoscale horizontally, needs an Auto Scaling Group in AWS to do so.
-- You must add the management app stored in the sample project in every new project. This is to be able to use custom commands internally. It's important that you remember to install the app in your settings.py project's file.
-- You must also add the Dockerfile and the entrypoint.sh to every new Django project.
+- You must add the [management app](https://github.com/ajaen4/django-serverless/tree/main/django_services/django_learning/management) stored in the sample project in every new project. This is to be able to use custom commands internally. It's important that you remember to install the app in your settings.py project's file.
+- You must also add the [Dockerfile](https://github.com/ajaen4/django-serverless/blob/main/django_services/django_learning/Dockerfile) and the entrypoint.sh to every new Django project.
 - When deploying locally the Django server will use the sqlite3 db and will ignore the db config stated in the IaC config. When deploying with Pulumi the Django server will use the config stated in the IaC Config.
 
 
