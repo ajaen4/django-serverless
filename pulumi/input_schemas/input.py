@@ -49,15 +49,15 @@ class Input:
             if "desired_count" in backend_cfg:
                 extra_container_args["desired_count"] = backend_cfg["desired_count"]
 
-            super_user_cfg = backend_cfg["super_user"]
-            super_user_cfg_fmt = SuperUserCfg(
-                username=super_user_cfg["username"],
-                email=super_user_cfg["email"],
+            superuser_cfg = backend_cfg["superuser"]
+            superuser_cfg_fmt = SuperUserCfg(
+                username=superuser_cfg["username"],
+                email=superuser_cfg["email"],
             )
 
             backend_cfg_fmt = BackendCfg(
                 django_project=backend_cfg["django_project"],
-                super_user=super_user_cfg_fmt,
+                superuser=superuser_cfg_fmt,
                 **extra_container_args,
             )
 

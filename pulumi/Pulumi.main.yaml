@@ -11,7 +11,7 @@ config:
         desired_count: 1
         lb_port: 80
         container_port: 8000
-        super_user:
+        superuser:
           username: admin
           email: user@example.com
       db:

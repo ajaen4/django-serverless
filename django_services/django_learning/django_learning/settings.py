@@ -13,13 +13,34 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 import environ
 import os
+import boto3
+import json
+
+
+def get_prod_db_cfg():
+    PSS_PARAM_NAME = env("PSS_PARAM_NAME")
+    AWS_DB_ENGINE = env("AWS_DB_ENGINE")
+
+    ssm_client = boto3.client("ssm")
+    response = ssm_client.get_parameter(Name=PSS_PARAM_NAME, WithDecryption=True)
+    service_pss = json.loads(response["Parameter"]["Value"])
+
+    return {
+        "ENGINE": AWS_DJANGO_ENG_MAP[AWS_DB_ENGINE],
+        "NAME": env("DB_NAME"),
+        "USER": "db_user",
+        "PASSWORD": service_pss["admin_db_password"],
+        "HOST": env("DB_HOST"),
+        "PORT": env("DB_PORT"),
+    }
+
 
 env = environ.Env()
 environ.Env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 
 # Quick-start development settings - unsuitable for production
@@ -92,17 +113,8 @@ DATABASES = {"default": {}}
 ENVIRONMENT = env("ENVIRONMENT")
 
 if ENVIRONMENT == "PROD":
-    AWS_DB_ENGINE = env("AWS_DB_ENGINE")
-    DATABASES["default"].update(
-        {
-            "ENGINE": AWS_DJANGO_ENG_MAP[AWS_DB_ENGINE],
-            "NAME": env("DB_NAME"),
-            "USER": "db_user",
-            "PASSWORD": env("DB_PASSWORD"),
-            "HOST": env("DB_HOST"),
-            "PORT": env("DB_PORT"),
-        }
-    )
+    prod_db_cfg = get_prod_db_cfg()
+    DATABASES["default"].update(prod_db_cfg)
 else:
     DATABASES["default"].update(
         {
