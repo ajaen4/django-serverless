@@ -5,6 +5,11 @@ FROM python:3.11.4-slim-buster
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
+RUN apt-get update && apt-get install -y \
+    awscli \
+    jq \
+    && rm -rf /var/lib/apt/lists/*
+
 # install dependencies
 RUN pip install --upgrade pip
 COPY ./requirements.txt .

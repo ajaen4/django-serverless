@@ -77,6 +77,7 @@ class ECSServices:
                             "elasticfilesystem:ClientWrite",
                             "elasticfilesystem:ClientRootAccess",
                             "elasticfilesystem:DescribeFileSystems",
+                            "ssm:*",
                         ],
                         "Resource": "*",
                     }

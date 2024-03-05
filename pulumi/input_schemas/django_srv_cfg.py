@@ -10,7 +10,7 @@ class SuperUserCfg:
 @dataclass
 class BackendCfg:
     django_project: str
-    super_user: SuperUserCfg
+    superuser: SuperUserCfg
     cpu: int = 256
     memory: int = 512
     lb_port: int = 80
