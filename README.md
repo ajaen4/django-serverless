@@ -46,7 +46,7 @@ config:
   vpc_name: type = str
   add_nat: type = bool, Optional
   django_services: type = dict, Optional
-    django_learning:
+    <django_project_1>:
       backend:
         django_project: type = str
         cpu: type = int, Optional (default = 256). The hard limit of CPU units to present for the task. Expressed using CPU units.
@@ -63,6 +63,8 @@ config:
         version: type = str. The AWS RDS engine version.
         db_name: type = str. DB name to hold Django ORM and internal tables.
         port: type = int. DB port.
+    <django_project_2>:
+      ...
 ```
 
 ## Important considerations
