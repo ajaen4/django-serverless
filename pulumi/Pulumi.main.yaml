@@ -9,6 +9,7 @@ config:
         cpu: 256
         memory: 512
         desired_count: 1
+        workers_per_instance: 3
         lb_port: 80
         container_port: 8000
         superuser:

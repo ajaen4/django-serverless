@@ -48,6 +48,8 @@ class Input:
                 extra_container_args["container_port"] = backend_cfg["container_port"]
             if "desired_count" in backend_cfg:
                 extra_container_args["desired_count"] = backend_cfg["desired_count"]
+            if "workers_per_instance" in backend_cfg:
+                extra_container_args["workers_per_instance"] = str(backend_cfg["workers_per_instance"])
 
             superuser_cfg = backend_cfg["superuser"]
             superuser_cfg_fmt = SuperUserCfg(

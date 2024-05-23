@@ -178,6 +178,7 @@ class ECSService:
                             str(CONT_PORT),
                             backend_cfg.superuser.username,
                             backend_cfg.superuser.email,
+                            backend_cfg.workers_per_instance,
                             args["passwords_param_name"],
                         ],
                         "environment": [

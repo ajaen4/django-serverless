@@ -16,6 +16,7 @@ class BackendCfg:
     lb_port: int = 80
     container_port: int = 8000
     desired_count: int = 1
+    workers_per_instance: str = 1
 
 
 @dataclass

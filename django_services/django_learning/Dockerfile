@@ -18,7 +18,12 @@ RUN pip install -r ./requirements.txt
 # Create a user with UID 1000 and GID 1000
 RUN groupadd -g 1000 appgroup && \
     useradd -r -u 1000 -g appgroup appuser
-# Switch to this user
+
+# Create the staticfiles directory and set permissions before switching to the user
+RUN mkdir -p /app/staticfiles && \
+    chown -R appuser:appgroup /app/staticfiles
+
+# Switch to the non-root user
 USER 1000:1000
 
 COPY . .

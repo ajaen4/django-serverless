@@ -10,6 +10,7 @@ class Repository:
                 scan_on_push=True,
             ),
             image_tag_mutability="MUTABLE",
+            force_delete=True,
         )
 
     def get_repository(self):

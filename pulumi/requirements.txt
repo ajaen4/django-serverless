@@ -1,5 +1,5 @@
 pulumi>=3.0.0,<4.0.0
 pulumi-aws<6.0.0,>=5.35.0
 pulumi-docker==4.4.1
-boto3==1.28.58
+boto3==1.34.55
 pulumi-random==4.16.0

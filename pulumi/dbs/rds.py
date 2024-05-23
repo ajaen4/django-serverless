@@ -53,6 +53,8 @@ class RDS:
         self.random_password = random.RandomPassword(
             f"{SERVICE_NAME}-db-password",
             length=16,
+            special=True,
+            override_special="_-=,.!#$%^&*()+<>?{}[]",
         )
 
         self.cluster = rds.Cluster(

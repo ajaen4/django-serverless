@@ -6,7 +6,8 @@ SERVICE_NAME="$1"
 CONTAINER_PORT="$2"
 SUPERUSER_USERNAME="$3"
 SUPERUSER_EMAIL="$4"
-PARAMETER_NAME="$5"
+WORKERS_PER_INSTANCE="$5"
+PARAMETER_NAME="$6"
 
 echo "Running database migrations"
 python manage.py migrate --noinput
@@ -20,5 +21,8 @@ python manage.py create_superuser_if_not_exists \
     --email $SUPERUSER_EMAIL \
     --password $SUPERUSER_PASSWORD
 
+echo "Collect static files, mainly for styling"
+python manage.py collectstatic
+
 echo "Starting Gunicorn server on port $CONTAINER_PORT"
-exec gunicorn -w 3 -b :$CONTAINER_PORT $SERVICE_NAME.wsgi:application
+exec gunicorn -w $WORKERS_PER_INSTANCE -b :$CONTAINER_PORT $SERVICE_NAME.wsgi:application
