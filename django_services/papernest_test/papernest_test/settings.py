@@ -5,28 +5,32 @@ import boto3
 import json
 
 
-def get_db_config() -> dict:
-    PSS_PARAM_NAME = env("PSS_PARAM_NAME")
+def get_db_config(environment: str) -> dict:
     AWS_DB_ENGINE = env("AWS_DB_ENGINE")
 
-    ssm_client = boto3.client("ssm")
-    response = ssm_client.get_parameter(
-        Name=PSS_PARAM_NAME, WithDecryption=True
-    )
-    service_pss = json.loads(response["Parameter"]["Value"])
+    if environment == "PROD":
+        PSS_PARAM_NAME = env("PSS_PARAM_NAME")
+        ssm_client = boto3.client("ssm")
+        response = ssm_client.get_parameter(
+            Name=PSS_PARAM_NAME, WithDecryption=True
+        )
+        admin_db_password = json.loads(response["Parameter"]["Value"])[
+            "admin_db_password"
+        ]
+    else:
+        admin_db_password = env("DB_PASSWORD")
 
     return {
         "ENGINE": AWS_DJANGO_ENG_MAP[AWS_DB_ENGINE],
         "NAME": env("DB_NAME"),
         "USER": env("DB_USER"),
-        "PASSWORD": service_pss["admin_db_password"],
+        "PASSWORD": admin_db_password,
         "HOST": env("DB_HOST"),
         "PORT": env("DB_PORT"),
     }
 
 
 env = environ.Env()
-environ.Env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -55,12 +59,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "polls.apps.PollsConfig",
     "management.apps.ManagementConfig",
+    "operators.apps.OperatorsConfig",
 ]
 
 MIDDLEWARE = [
-    "django_learning.middleware.HealthCheckMiddleware",
+    "papernest_test.middleware.HealthCheckMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -70,7 +74,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "django_learning.urls"
+ROOT_URLCONF = "papernest_test.urls"
 
 TEMPLATES = [
     {
@@ -88,22 +92,20 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "django_learning.wsgi.application"
+WSGI_APPLICATION = "papernest_test.wsgi.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 AWS_DJANGO_ENG_MAP = {
-    "aurora-mysql": "django.db.backends.mysql",
-    "aurora-postgresql": "django.db.backends.postgresql",
+    "aurora-postgresql": "django.contrib.gis.db.backends.postgis",
 }
-
 
 ENVIRONMENT = env("ENVIRONMENT")
 
 if ENVIRONMENT == "PROD" or ENVIRONMENT == "COMPOSE":
-    DATABASES = {"default": get_db_config()}
+    DATABASES = {"default": get_db_config(ENVIRONMENT)}
 else:
     DATABASES = {
         "default": {
@@ -112,7 +114,7 @@ else:
         }
     }
 
-DEBUG = ENVIRONMENT != "PROD"
+DEBUG = True
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators

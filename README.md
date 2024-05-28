@@ -52,6 +52,7 @@ config:
         cpu: type = int, Optional (default = 256). The hard limit of CPU units to present for the task. Expressed using CPU units.
         memory: type = int, Optional (default = 512). The hard limit of memory (in MiB) to present to the task.
         desired_count: type = int, Optional (default = 1). Number of instances of the task definition to place and keep running.
+        workers_per_instance: type = int, Optional (default = 1). Number of Django workers per instance.
         lb_port: type = int, Optional (default = 80). Load Balancer port.
         container_port: type = int, Optional (default = 8000). Container port.
         superuser:

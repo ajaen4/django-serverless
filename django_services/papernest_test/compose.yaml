@@ -1,0 +1,40 @@
+
+name: papernest_test
+
+services:
+
+  postgres:
+    image: postgis/postgis:latest
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_USER: db_user
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - postgresdb:/var/lib/postgresql/data
+
+  django:
+    build: .
+    entrypoint: 
+      - ./compose_entrypoint.sh
+    command:
+      - papernest_test
+      - "8000"
+      - admin
+      - admin@example.com
+      - adminpassword
+      - "1"
+    environment:
+      ENVIRONMENT: COMPOSE
+      DB_NAME: db
+      DB_USER: db_user
+      DB_PASSWORD: admin
+      DB_HOST: postgres
+      AWS_DB_ENGINE: aurora-postgresql
+      DB_PORT: 5432
+    depends_on:
+      - postgres
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgresdb:

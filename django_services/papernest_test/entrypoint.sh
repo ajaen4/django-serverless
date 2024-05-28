@@ -24,6 +24,10 @@ python manage.py create_superuser_if_not_exists \
 echo "Collect static files, mainly for styling"
 python manage.py collectstatic --noinput
 
+echo "Installing GIS extension on postgres"
+DB_PSS=$(aws ssm get-parameter --name $PARAMETER_NAME --with-decryption | jq -r '.Parameter.Value | fromjson.admin_db_password')
+PGPASSWORD="$DB_PSS" psql -U "$DB_USER" -d "$DB_NAME" -h "$DB_HOST" -p "$DB_PORT" -c "CREATE EXTENSION IF NOT EXISTS postgis;"
+
 echo "Initializing data in DB"
 python manage.py init_db
 

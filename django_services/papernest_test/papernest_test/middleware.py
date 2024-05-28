@@ -3,6 +3,6 @@ from django.utils.deprecation import MiddlewareMixin
 
 
 class HealthCheckMiddleware(MiddlewareMixin):
-    def process_request(self, request: HttpRequest):
+    def process_request(self, request: HttpRequest) -> HttpResponse:
         if request.META["PATH_INFO"] == "/ping/":
             return HttpResponse("OK")

@@ -1,2 +1,7 @@
 -e django_services/django_learning/
--e pulumi/
+-e django_services/papernest_test/
+-e iac/
+black==24.4.2
+pre-commit==3.4.0
+mypy==1.9.0
+types-requests==2.31.0
