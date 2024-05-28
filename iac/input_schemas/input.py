@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from pulumi import Config
 from .django_srv_cfg import DjangoServiceCfg, BackendCfg, DBCfg, SuperUserCfg
@@ -8,10 +8,10 @@ from .vpc_cfg import VPCCfg
 @dataclass
 class Input:
     vpc_cfg: VPCCfg
-    django_srvs_cfg: list[DjangoServiceCfg] = None
+    django_srvs_cfg: list[DjangoServiceCfg] = field(default_factory=list)
 
     @classmethod
-    def from_cfg(cls, iac_cfg: Config):
+    def from_cfg(cls, iac_cfg: Config) -> "Input":
         django_srvs_cfg_fmt = Input.serialize_django_srvs_cfg(iac_cfg)
         vpc_cfg_fmt = Input.serialize_vpc_cfg(iac_cfg)
 
@@ -21,9 +21,9 @@ class Input:
         )
 
     @staticmethod
-    def serialize_vpc_cfg(iac_cfg: Config) -> dict:
-        name = iac_cfg.get("vpc_name")
-        add_nat = iac_cfg.get_bool("add_nat", default=False)
+    def serialize_vpc_cfg(iac_cfg: Config) -> VPCCfg:
+        name = iac_cfg.get("vpc_name") or "vpc"
+        add_nat = iac_cfg.get_bool("add_nat") or False
 
         return VPCCfg(
             vpc_name=name,
@@ -32,7 +32,7 @@ class Input:
 
     @staticmethod
     def serialize_django_srvs_cfg(iac_cfg: Config) -> list[DjangoServiceCfg]:
-        django_srvs_cfg = iac_cfg.get_object("django_services", {})
+        django_srvs_cfg: dict = iac_cfg.get_object("django_services") or {}
         django_srvs_cfg_fmt = list()
 
         for name, config in django_srvs_cfg.items():
@@ -45,11 +45,18 @@ class Input:
             if "lb_port" in backend_cfg:
                 extra_container_args["lb_port"] = backend_cfg["lb_port"]
             if "container_port" in backend_cfg:
-                extra_container_args["container_port"] = backend_cfg["container_port"]
+                extra_container_args["container_port"] = backend_cfg[
+                    "container_port"
+                ]
+
             if "desired_count" in backend_cfg:
-                extra_container_args["desired_count"] = backend_cfg["desired_count"]
+                extra_container_args["desired_count"] = backend_cfg[
+                    "desired_count"
+                ]
             if "workers_per_instance" in backend_cfg:
-                extra_container_args["workers_per_instance"] = str(backend_cfg["workers_per_instance"])
+                extra_container_args["workers_per_instance"] = str(
+                    backend_cfg["workers_per_instance"]
+                )
 
             superuser_cfg = backend_cfg["superuser"]
             superuser_cfg_fmt = SuperUserCfg(
@@ -69,6 +76,7 @@ class Input:
                 version=db_cfg["version"],
                 family=db_cfg["family"],
                 db_name=db_cfg["db_name"],
+                db_user=db_cfg["db_user"],
                 port=db_cfg["port"],
             )
 

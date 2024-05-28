@@ -4,12 +4,14 @@ import pulumi_docker as docker
 
 
 class Image:
-    def __init__(self, name: str, django_project: str, ecr_repository: ecr.Repository):
+    def __init__(
+        self, name: str, django_project: str, ecr_repository: ecr.Repository
+    ) -> None:
         self.name = name
         self.django_project = django_project
         self.ecr_repository = ecr_repository
 
-    def push_image(self, version: str):
+    def push_image(self, version: str) -> pulumi.Output:
         image_tag = f"{self.name}-{version}"
         self._authenticate()
         image = docker.Image(
@@ -34,7 +36,7 @@ class Image:
 
         return image.image_name
 
-    def _authenticate(self):
+    def _authenticate(self) -> None:
         self.auth_token = ecr.get_authorization_token_output(
             registry_id=self.ecr_repository.registry_id
         )

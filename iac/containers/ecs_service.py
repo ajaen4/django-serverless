@@ -17,20 +17,20 @@ class ECSService:
         networking: Networking,
         django_srv_cfg: DjangoServiceCfg,
         roles: dict[str, iam.Role],
-    ):
+    ) -> None:
         self.networking = networking
         self.django_srv_cfg = django_srv_cfg
         self.roles = roles
         self.create_resources()
 
-    def create_resources(self):
+    def create_resources(self) -> None:
         self.create_networking()
         self.create_db()
         self.create_pss_params()
         self.create_ecs_service()
         self.create_outputs()
 
-    def create_networking(self):
+    def create_networking(self) -> None:
         SERVICE_NAME = self.django_srv_cfg.service_name.replace("_", "-")
         LB_PORT = self.django_srv_cfg.backend_cfg.lb_port
 
@@ -125,10 +125,10 @@ class ECSService:
             ],
         )
 
-    def create_db(self):
+    def create_db(self) -> None:
         self.db = RDS(self.networking, self.ecs_sg, self.django_srv_cfg)
 
-    def create_ecs_service(self):
+    def create_ecs_service(self) -> None:
         backend_cfg = self.django_srv_cfg.backend_cfg
         db_cfg = self.django_srv_cfg.db_cfg
 
@@ -203,6 +203,10 @@ class ECSService:
                                 "value": db_cfg.db_name,
                             },
                             {
+                                "name": "DB_USER",
+                                "value": db_cfg.db_user,
+                            },
+                            {
                                 "name": "PSS_PARAM_NAME",
                                 "value": args["passwords_param_name"],
                             },
@@ -255,10 +259,12 @@ class ECSService:
                     container_port=CONT_PORT,
                 )
             ],
-            opts=pulumi.ResourceOptions(depends_on=[self.db.get_db_instance()]),
+            opts=pulumi.ResourceOptions(
+                depends_on=[self.db.get_db_instance()]
+            ),
         )
 
-    def create_pss_params(self):
+    def create_pss_params(self) -> None:
         SERVICE_NAME = self.django_srv_cfg.service_name.replace("_", "-")
         self.superuser_password = random.RandomPassword(
             f"{SERVICE_NAME}-super-user-password",
@@ -285,10 +291,12 @@ class ECSService:
             data_type="text",
         )
 
-    def create_outputs(self):
+    def create_outputs(self) -> None:
         pulumi.export(
-            f"{self.django_srv_cfg.service_name}-lb-dns", self.django_lb.dns_name
+            f"{self.django_srv_cfg.service_name}-lb-dns",
+            self.django_lb.dns_name,
         )
         pulumi.export(
-            f"{self.django_srv_cfg.service_name}-passwords", self.service_passwords.name
+            f"{self.django_srv_cfg.service_name}-passwords",
+            self.service_passwords.name,
         )

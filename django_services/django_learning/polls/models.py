@@ -15,10 +15,10 @@ class Question(Model):
     question_text = CharField(max_length=200)
     pub_date = DateTimeField(verbose_name="date published")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.question_text
 
-    def was_published_recently(self):
+    def was_published_recently(self) -> bool:
         return self.pub_date >= timezone.now() - datetime.timedelta(days=1)
 
 
@@ -27,5 +27,5 @@ class Choice(Model):
     choice_text = CharField(max_length=200)
     votes = IntegerField(default=0)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.choice_text

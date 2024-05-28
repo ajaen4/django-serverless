@@ -1,3 +1,4 @@
+import pulumi
 from pulumi import ResourceOptions
 from pulumi_aws import ec2
 
@@ -5,14 +6,16 @@ from input_schemas import VPCCfg, SubnetType
 
 
 class Networking:
-    def __init__(self, vpc_cfg: VPCCfg):
+    def __init__(self, vpc_cfg: VPCCfg) -> None:
         self.vpc_name = vpc_cfg.vpc_name
         self.add_nat = vpc_cfg.add_nat
         self.create_resources()
 
-    def create_resources(self):
+    def create_resources(self) -> None:
         self.vpc = ec2.Vpc(
-            self.vpc_name, cidr_block="10.0.0.0/16", tags={"Name": self.vpc_name}
+            self.vpc_name,
+            cidr_block="10.0.0.0/16",
+            tags={"Name": self.vpc_name},
         )
 
         self.public_subnet_a = ec2.Subnet(
@@ -133,10 +136,10 @@ class Networking:
             route_table_id=public_route_table.id,
         )
 
-    def get_vpc_id(self) -> ec2.Vpc.id:
+    def get_vpc_id(self) -> pulumi.Output:
         return self.vpc.id
 
-    def get_subnet_ids(self, subnet_type: SubnetType) -> list[ec2.Subnet.id]:
+    def get_subnet_ids(self, subnet_type: SubnetType) -> list[pulumi.Output]:
         if subnet_type == SubnetType.PUBLIC:
             return [self.public_subnet_a.id, self.public_subnet_b.id]
         elif subnet_type == SubnetType.PRIVATE:

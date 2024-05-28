@@ -1,5 +1,6 @@
 from pulumi_aws import ec2, rds
 import pulumi_random as random
+import pulumi
 
 from input_schemas import DjangoServiceCfg
 from networking import Networking
@@ -12,13 +13,13 @@ class RDS:
         networking: Networking,
         backend_sg: ec2.SecurityGroup,
         django_srv_cfg: DjangoServiceCfg,
-    ):
+    ) -> None:
         self.service_name = django_srv_cfg.service_name
         self.db_cfg = django_srv_cfg.db_cfg
         self.networking = networking
         self.create_resources(backend_sg)
 
-    def create_resources(self, backend_sg: ec2.SecurityGroup):
+    def create_resources(self, backend_sg: ec2.SecurityGroup) -> None:
         SERVICE_NAME = self.service_name.replace("_", "-")
 
         db_sg = ec2.SecurityGroup(
@@ -78,11 +79,11 @@ class RDS:
             db_subnet_group_name=db_subnet_group.name,
         )
 
-    def get_host(self):
+    def get_host(self) -> pulumi.Output:
         return self.cluster.endpoint
 
-    def get_password(self):
+    def get_password(self) -> pulumi.Output:
         return self.random_password.result
 
-    def get_db_instance(self):
+    def get_db_instance(self) -> rds.ClusterInstance:
         return self.db_instance

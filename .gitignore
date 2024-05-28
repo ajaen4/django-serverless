@@ -136,3 +136,6 @@ GitHub.sublime-settings
 !.vscode/launch.json 
 !.vscode/extensions.json 
 .history
+
+# Data files
+*/*/data/operators_cvg_processed.csv

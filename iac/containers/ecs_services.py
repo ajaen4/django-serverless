@@ -8,17 +8,19 @@ from .ecs_service import ECSService
 
 
 class ECSServices:
-    def __init__(self, networking: Networking, django_srvs_cfg: list[DjangoServiceCfg]):
+    def __init__(
+        self, networking: Networking, django_srvs_cfg: list[DjangoServiceCfg]
+    ) -> None:
         self.networking = networking
         self.django_srvs_cfg = django_srvs_cfg
-        self.roles = dict()
+        self.roles: dict = dict()
         self.create_common_resources()
 
-    def create_common_resources(self):
+    def create_common_resources(self) -> None:
         self.create_roles()
         self.create_services()
 
-    def create_roles(self):
+    def create_roles(self) -> None:
         ecs_role_policy_document = json.dumps(
             {
                 "Version": "2008-10-17",
@@ -115,6 +117,6 @@ class ECSServices:
 
         self.roles["ecs_task_role"] = ecs_task_role
 
-    def create_services(self):
+    def create_services(self) -> None:
         for django_srv_cfg in self.django_srvs_cfg:
             ECSService(self.networking, django_srv_cfg, self.roles)

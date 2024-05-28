@@ -1,0 +1,13 @@
+<div>
+  {% if operators %}
+  <ul>
+    {% for operator in operators %}
+    <li>
+      {{ operator.name }}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No operators are available.</p>
+  {% endif %}
+</div>

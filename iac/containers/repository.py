@@ -2,7 +2,7 @@ from pulumi_aws import ecr
 
 
 class Repository:
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         self.ecr_repository = ecr.Repository(
             name,
             name=name,
@@ -13,5 +13,5 @@ class Repository:
             force_delete=True,
         )
 
-    def get_repository(self):
+    def get_repository(self) -> ecr.Repository:
         return self.ecr_repository
