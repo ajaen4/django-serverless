@@ -98,7 +98,6 @@ celerybeat-schedule.*
 *.sage.py 
 
 # Environments 
-.env 
 .venv 
 env/ 
 venv/ 
@@ -139,3 +138,4 @@ GitHub.sublime-settings
 
 # Data files
 */*/data/operators_cvg_processed.csv
+django_services/.*/migrations/.*

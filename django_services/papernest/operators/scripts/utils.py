@@ -1,4 +1,5 @@
 import pyproj
+from typing import Generator, IO
 
 
 class CoordTransformer:
@@ -12,7 +13,7 @@ class CoordTransformer:
 
     def transform(self, x: int, y: int) -> tuple[float, float]:
         long, lat = pyproj.transform(self.lambert, self.wgs84, x, y)
-        return long, lat
+        return lat, long
 
 
 def process_init_file(path: str) -> list[dict]:
@@ -43,3 +44,9 @@ def operator(fields: list, coordinates: tuple) -> dict:
         "g3": is_3g,
         "g4": is_4g,
     }
+
+
+def skip_comments(file: IO) -> Generator:
+    for line in file:
+        if not line.strip().startswith("#"):
+            yield line

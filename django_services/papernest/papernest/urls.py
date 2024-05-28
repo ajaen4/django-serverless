@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
-from papernest_test import settings
+from papernest import settings
 from django.conf.urls.static import static
 
 urlpatterns = [

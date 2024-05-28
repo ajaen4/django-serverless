@@ -1,5 +1,5 @@
 
-name: papernest_test
+name: papernest
 
 services:
 
@@ -17,7 +17,7 @@ services:
     entrypoint: 
       - ./compose_entrypoint.sh
     command:
-      - papernest_test
+      - papernest
       - "8000"
       - admin
       - admin@example.com
