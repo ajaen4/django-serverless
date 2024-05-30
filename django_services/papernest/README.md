@@ -4,16 +4,16 @@
 
 Steps taken to solve the exercise:
 
-1. Created a [script](https://github.com/ajaen4/django-serverless/blob/django_services/papernest/operators/scripts/process_init_data.py) to process the data provided and transform Lambert coordinates to degrees (latitude and longitude).
-2. Created new app called [operators](https://github.com/ajaen4/django-serverless/blob/django_services/papernest/operators/) inside the Papernest Django application to contain all the business logic for this exercise.
-3. Created two DB models: [Operator and Coverage](https://github.com/ajaen4/django-serverless/blob/django_services/papernest/operators/models.py). Operator holds the available operators in the initial dataset. Coverage holds all the geographical points where we have data on the coverage for different operators.
-4. Created [Django command](https://github.com/ajaen4/django-serverless/blob/django_services/papernest/management/management/commands/init_db.py) to load the data into the DB. It will only run if it detects the database hasn't been initialized yet.
-5. Created [two views](https://github.com/ajaen4/django-serverless/blob/django_services/papernest/operators/views.py) inside the operators app: a generic list view for the Operator model and a function-based view that retrieves the coverage of the operators based on the textual address.
-6. Installed the [GIS extension and the necessary libraries](https://github.com/ajaen4/django-serverless/blob/django_services/papernest/Dockerfile#11) in the Django server to be able to use geographical objects in the database.
+1. Created a [script](https://github.com/ajaen4/django-serverless/blob/main/django_services/papernest/operators/scripts/process_init_data.py) to process the data provided and transform Lambert coordinates to degrees (latitude and longitude).
+2. Created new app called [operators](https://github.com/ajaen4/django-serverless/blob/main/django_services/papernest/operators/) inside the Papernest Django application to contain all the business logic for this exercise.
+3. Created two DB models: [Operator and Coverage](https://github.com/ajaen4/django-serverless/blob/main/django_services/papernest/operators/models.py). Operator holds the available operators in the initial dataset. Coverage holds all the geographical points where we have data on the coverage for different operators.
+4. Created [Django command](https://github.com/ajaen4/django-serverless/blob/main/django_services/papernest/management/management/commands/init_db.py) to load the data into the DB. It will only run if it detects the database hasn't been initialized yet.
+5. Created [two views](https://github.com/ajaen4/django-serverless/blob/main/django_services/papernest/operators/views.py) inside the operators app: a generic list view for the Operator model and a function-based view that retrieves the coverage of the operators based on the textual address.
+6. Installed the [GIS extension and the necessary libraries](https://github.com/ajaen4/django-serverless/blob/main/django_services/papernest/Dockerfile#11) in the Django server to be able to use geographical objects in the database.
 7. Developed unit tests for critical logic:
-    - Function based view with [exercise's logic](https://github.com/ajaen4/django-serverless/blob/django_services/papernest/operators/tests/test_views.py).
-    - [Logic that queries the model](https://github.com/ajaen4/django-serverless/blob/django_services/papernest/operators/tests/test_models.py) to find the nearest coverages to the coordinates provided.
-    - [Lambert function](https://github.com/ajaen4/django-serverless/blob/django_services/papernest/operators/scripts/tests/test_utils.py) used in initial script to transform Lambert's coordinates to degrees.
+    - Function based view with [exercise's logic](https://github.com/ajaen4/django-serverless/blob/main/django_services/papernest/operators/tests/test_views.py).
+    - [Logic that queries the model](https://github.com/ajaen4/django-serverless/blob/main/django_services/papernest/operators/tests/test_models.py) to find the nearest coverages to the coordinates provided.
+    - [Lambert function](https://github.com/ajaen4/django-serverless/blob/main/django_services/papernest/operators/scripts/tests/test_utils.py) used in initial script to transform Lambert's coordinates to degrees.
 
 ## How it works
 
@@ -49,7 +49,7 @@ python3 manage.py runserver
 
 ### Docker compose
 
-This mode uses docker compose to run a Postgres db and Django application on different containers. You can find the docker compose file [here](https://github.com/ajaen4/django-serverless/blob/django_services/papernest/compose.yaml).
+This mode uses docker compose to run a Postgres db and Django application on different containers. You can find the docker compose file [here](https://github.com/ajaen4/django-serverless/blob/main/django_services/papernest/compose.yaml).
 
 **One important consideration is that you migth need to run the command 'docker compose up' a second time if the Django app is deployed before the Postgres database is ready to accept incoming requests.**
 
@@ -77,7 +77,7 @@ cd iac/
 pulumi up
 ```
 
-When the command finishes it will output the domain of our Django project, you can use it to query the endpoint. More details about this deployment can be found in the root [README.md](README.md)
+When the command finishes it will output the domain of our Django project, you can use it to query the endpoint. More details about this deployment can be found in the root [README.md](https://github.com/ajaen4/django-serverless/blob/main/README.md)
 
 ## Possible improvements
 
