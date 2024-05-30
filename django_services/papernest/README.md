@@ -9,7 +9,7 @@ Steps taken to solve the exercise:
 3. Created two DB models: [Operator and Coverage](https://github.com/ajaen4/django-serverless/blob/main/django_services/papernest/operators/models.py). Operator holds the available operators in the initial dataset. Coverage holds all the geographical points where we have data on the coverage for different operators.
 4. Created [Django command](https://github.com/ajaen4/django-serverless/blob/main/django_services/papernest/management/management/commands/init_db.py) to load the data into the DB. It will only run if it detects the database hasn't been initialized yet.
 5. Created [two views](https://github.com/ajaen4/django-serverless/blob/main/django_services/papernest/operators/views.py) inside the operators app: a generic list view for the Operator model and a function-based view that retrieves the coverage of the operators based on the textual address.
-6. Installed the [GIS extension and the necessary libraries](https://github.com/ajaen4/django-serverless/blob/main/django_services/papernest/Dockerfile#11) in the Django server to be able to use geographical objects in the database.
+6. Installed the [GIS extension and the necessary libraries](https://github.com/ajaen4/django-serverless/blob/main/django_services/papernest/Dockerfile#L11) in the Django server to be able to use geographical objects in the database.
 7. Developed unit tests for critical logic:
     - Function based view with [exercise's logic](https://github.com/ajaen4/django-serverless/blob/main/django_services/papernest/operators/tests/test_views.py).
     - [Logic that queries the model](https://github.com/ajaen4/django-serverless/blob/main/django_services/papernest/operators/tests/test_models.py) to find the nearest coverages to the coordinates provided.
@@ -35,7 +35,19 @@ When running on AWS you can test the endpoint with the following example command
 curl -G "<load_balancer_hostname>/operators/coverage/" --data-urlencode "q=42 rue papernest 75011 Paris" | jq
 ```
 
-## Deployment models
+## Dependencies installation
+
+From the root of the project create a virtual environment and execute the installation command:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+make install
+```
+
+This will install all necessary requirements and configure precommit, used to enforce linting and typing requirements.
+
+## Deployment modes
 
 The Django application can be deployed in 3 ways: using the built in Django development server, using docker compose and deploying to AWS.
 
@@ -80,7 +92,7 @@ docker compose up
 
 This mode uses pulumi to deploy to AWS. It will deploy a Postgres RDS database and a Load Balancer + ECS service to host the Django application.
 
-**One important consideration is that you will need to install the [Pulumi CLI](https://www.pulumi.com/docs/install/) locally and [create a stack](https://www.pulumi.com/docs/concepts/stack/#:~:text=To%20create%20a%20new%20stack,yaml%20file.) for the project**
+**One important consideration is that you will need to install the [Pulumi CLI](https://www.pulumi.com/docs/install/) locally and [create a stack](https://www.pulumi.com/docs/concepts/stack/#:~:text=To%20create%20a%20new%20stack,yaml%20file.) for the project.**
 
 These are the following commands needed to run it:
 
