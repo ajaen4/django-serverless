@@ -108,4 +108,4 @@ python3 manage.py test operators.scripts.tests
 
 - The Django server uses HTTP, which is not safe. It should use HTTPS by generating and setting an SSL certificate.
 - The Django server hosts the endpoints and the static files server, these should be separated.
-- Only the most critical tests have been included as unitary tests for simplicity purposses, but these should be extended.
+- Only the most critical tests have been included as unitary tests for simplicity purposes, but these should be extended.
