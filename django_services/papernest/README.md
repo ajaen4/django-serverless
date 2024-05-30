@@ -23,6 +23,18 @@ The code is statically typed with mypy and formatted with black. These constrain
 
 Once the method is called it executes an HTTP request to the API provided and retrieves the latitude and longitude of the address. It then queries the table of coverages to find the nearest record (if it exists) that is at most 200 meters away from the address given. Finally, it returns as a JSON object the coverages for each provider found.
 
+When running locally you can test the endpoint with the following example command:
+
+```bash
+curl -G "http://localhost:8000/operators/coverage/" --data-urlencode "q=42 rue papernest 75011 Paris" | jq
+```
+
+When running on AWS you can test the endpoint with the following example command:
+
+```bash
+curl -G "<load_balancer_hostname>/operators/coverage/" --data-urlencode "q=42 rue papernest 75011 Paris" | jq
+```
+
 ## Deployment models
 
 The Django application can be deployed in 3 ways: using the built in Django development server, using docker compose and deploying to AWS.
