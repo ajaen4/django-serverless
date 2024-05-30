@@ -81,6 +81,17 @@ pulumi up
 
 When the command finishes it will output the domain of our Django project, you can use it to query the endpoint. More details about this deployment can be found in the root [README.md](https://github.com/ajaen4/django-serverless/blob/main/README.md)
 
+## Run tests
+
+```bash
+# Navigate to the papernest Django project
+cd django_services/papernest
+# Run operators tests
+python3 manage.py test operators.tests
+# Run scripts tests
+python3 manage.py test operators.scripts.tests
+```
+
 ## Possible improvements
 
 - The Django server uses HTTP, which is not safe. It should use HTTPS by generating and setting an SSL certificate.
