@@ -3,9 +3,9 @@ config:
   vpc_name: django-serverless
   add_nat: true
   django_services:
-    papernest_test:
+    papernest:
       backend:
-        django_project: papernest_test
+        django_project: papernest
         cpu: 2048
         memory: 4096
         desired_count: 3
@@ -19,6 +19,6 @@ config:
         engine: aurora-postgresql
         family: db.t3.medium
         version: "15.2"
-        db_name: papernest_test
+        db_name: papernest
         db_user: db_user
         port: 5432

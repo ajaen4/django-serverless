@@ -1,5 +1,5 @@
 -e django_services/django_learning/
--e django_services/papernest_test/
+-e django_services/papernest/
 -e iac/
 black==24.4.2
 pre-commit==3.4.0

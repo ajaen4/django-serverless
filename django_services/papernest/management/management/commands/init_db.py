@@ -49,7 +49,7 @@ class Command(BaseCommand):
             location = Point(
                 float(operator_cvg["longitude"]),
                 float(operator_cvg["latitude"]),
-                srid=4326,
+                srid=Coverage.SRID_WGS84,
             )
             operator_cvg.pop("latitude")
             operator_cvg.pop("longitude")
