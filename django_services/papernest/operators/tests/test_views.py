@@ -44,14 +44,20 @@ class OperatorsCvgTest(TestCase):
         )
         self.assertEqual(first_response.status_code, 405)
 
-        # Test correct call
-        second_data = {"q": "15 Pl. Vendôme, 75001 Paris, France"}
+        # Test missing required parameter
         second_response = self.client.get(
-            reverse("operators:operators_coverage"), second_data
+            reverse("operators:operators_coverage")
         )
-        self.assertEqual(second_response.status_code, 200)
+        self.assertEqual(second_response.status_code, 400)
 
-        second_expected_results = {
+        # Test correct call
+        third_data = {"q": "15 Pl. Vendôme, 75001 Paris, France"}
+        third_response = self.client.get(
+            reverse("operators:operators_coverage"), third_data
+        )
+        self.assertEqual(third_response.status_code, 200)
+
+        third_expected_results = {
             "Orange": {
                 "2G": True,
                 "3G": True,
@@ -69,5 +75,5 @@ class OperatorsCvgTest(TestCase):
             },
         }
         self.assertEqual(
-            json.loads(second_response.content), second_expected_results
+            json.loads(third_response.content), third_expected_results
         )

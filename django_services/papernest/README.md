@@ -21,7 +21,7 @@ The code is statically typed with mypy and formatted with black. These constrain
 
 The endpoint to request coverages for a certain textual address is /operators/coverage/. This endpoint has as a mandatory parameter called "q" where the textual address should be provided. The endpoint only accepts incoming GET methods.
 
-Once the method is called it executes an HTTP request to the API provided and retrieves the latitude and longitude of the address. It then queries the table of coverages to find the nearest record, if it exists, that is at most 200 meters away from the address given. Finally, it returns as a JSON object the coverages for each provider found.
+Once the method is called it executes an HTTP request to the API provided and retrieves the latitude and longitude of the address. It then queries the table of coverages to find the nearest record (if it exists) that is at most 200 meters away from the address given. Finally, it returns as a JSON object the coverages for each provider found.
 
 ## Deployment models
 
@@ -80,6 +80,17 @@ pulumi up
 ```
 
 When the command finishes it will output the domain of our Django project, you can use it to query the endpoint. More details about this deployment can be found in the root [README.md](https://github.com/ajaen4/django-serverless/blob/main/README.md)
+
+## Run tests
+
+```bash
+# Navigate to the papernest Django project
+cd django_services/papernest
+# Run operators tests
+python3 manage.py test operators.tests
+# Run scripts tests
+python3 manage.py test operators.scripts.tests
+```
 
 ## Possible improvements
 
