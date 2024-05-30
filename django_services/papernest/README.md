@@ -19,7 +19,7 @@ The code is statically typed with mypy and formatted with black. These constrain
 
 ## How it works
 
-The endpoint to request coverages for a certain textual address is /operators/coverage/. This endpoint has as a mandatory parameter called "q" where the textual address should be provided. The endpoint only accepts incoming GET methods.
+**The endpoint to request coverages for a certain textual address is /operators/coverage/**. This endpoint has as a mandatory parameter called "q" where the textual address should be provided. The endpoint only accepts incoming GET methods.
 
 Once the method is called it executes an HTTP request to the API provided and retrieves the latitude and longitude of the address. It then queries the table of coverages to find the nearest record (if it exists) that is at most 200 meters away from the address given. Finally, it returns as a JSON object the coverages for each provider found.
 
