@@ -15,6 +15,8 @@ Steps taken to solve the exercise:
     - [Logic that queries the model](https://github.com/ajaen4/django-serverless/blob/main/django_services/papernest/operators/tests/test_models.py) to find the nearest coverages to the coordinates provided.
     - [Lambert function](https://github.com/ajaen4/django-serverless/blob/main/django_services/papernest/operators/scripts/tests/test_utils.py) used in initial script to transform Lambert's coordinates to degrees.
 
+The code is statically typed with mypy and formatted with black. These constraints are enforced with [precommit](https://github.com/ajaen4/django-serverless/blob/main/.pre-commit-config.yaml).
+
 ## How it works
 
 The endpoint to request coverages for a certain textual address is /operators/coverage/. This endpoint has as a mandatory parameter called "q" where the textual address should be provided. The endpoint only accepts incoming GET methods.
